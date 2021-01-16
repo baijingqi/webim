@@ -24,6 +24,6 @@ PHP + lumen + Swoole 开发的多房间聊天室demo,功能包括登录、注册
 
 
 浏览器访问 http://127.0.0.1/webim/public  即可进入聊天
-![Image text](https://github.com/baijingqi/webim/blob/master/demo.png)
+![Image text](https://raw.githubusercontent.com/baijingqi/webim/master/demo.png)
 
 
