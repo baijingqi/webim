@@ -16,18 +16,23 @@
     <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 </head>
-<body id="webim">
-<div class="row" style="margin: 0 auto">
-    <div class="col-xs-10 col-xs-offset-1" style="margin-top:40px;">
+<body id="webim" style="margin: 0 auto">
+<div class="row" style="height: inherit;margin-top: 40px;">
+    <div class="col-xs-10 col-xs-offset-1" style="">
         <div class="panel panel-info">
-            <div class="panel-heading">
-               PHP + Swoole 简易聊天室
+            <div style="display: flex">
+                <div class="panel-heading" id="welcomeMsg">
+                    PHP + Swoole 简易聊天室
+                </div>
+                <div>
+                    <button class="btn btn-info" style="margin-top: 4px;" id="registerNewRoom">新建群聊</button>
+                </div>
             </div>
             <div class="panel-body no-padding">
-                <div class="col-xs-3 user-list">
+                <div class="col-xs-3 room-list">
 
                 </div>
-                <div class="col-xs-9 no-padding">
+                <div class="col-xs-9 no-padding" id="chatListContainer">
                     <div class="chat-list">
                     </div>
                     <div class="message">
@@ -42,16 +47,35 @@
             </div>
         </div>
     </div>
+    <div id="register-form" style="display: none" class="rows">
+        <div class="form-group">
+            <input type="text" class="form-control" id="username" placeholder="请输入用户名">
+        </div>
+        <div class="form-group">
+            <input type="password" id="password" class="form-control" placeholder="请输入密码">
+        </div>
+        <div class="form-group">
+            <button id="login" class="btn btn-success">注册/登录</button>
+        </div>
+    </div>
+    <div class="rows" style="margin: 0 auto;display: none" id="friendListContent">
+        <div style="text-align: center">
+            <button id="checkFriend" class="btn btn-success">选择完毕</button>
+        </div>
+        <div id="friendListContainer">
+
+        </div>
+    </div>
 </div>
 
 <script src="js/jquery.min.js"></script>
 <script src="js/layui/layui.js"></script>
 <script src="js/bootstrap.min.js"></script>
+<script src="https://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script src="js/webim.js"></script>
 <a href="https://github.com/baijingqi/webim" target="_blank">
-    <img style="position: absolute; top: 0; right: 0; border: 0; z-index:9999;" src="images/forkme_right_orange_ff7600.png" alt="Fork me on GitHub">
+    <img style="position: absolute; top: 0; right: 0; border: 0; z-index:9999;"
+         src="images/forkme_right_orange_ff7600.png" alt="Fork me on GitHub">
 </a>
 </body>
-
-
 </html>

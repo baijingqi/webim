@@ -1,19 +1,25 @@
-#webim {
-    background-color: #0099FF ;
+html, body {
+    height: 100%;
+    overflow: hidden;
 }
-#webim li{
+
+#webim {
+    background-color: #0099FF;
+}
+
+#webim li {
     list-style: none;
 }
 
-#webim .user-list {
-    height:600px;
+#webim .room-list {
+    height: 600px;
     margin: 0;
-    padding:0;
-    border-right:1px solid #d6e9c6;
-    overflow-y:auto;
+    padding: 0;
+    border-right: 1px solid #d6e9c6;
+    overflow-y: auto;
 }
 
-#webim .user-list .user-item {
+#webim .room-list .user-item {
     height: 60px;
     line-height: 60px;
     overflow: hidden;
@@ -22,66 +28,62 @@
 }
 
 
-#webim  .user-list .user-item:hover {
+#webim .room-list .user-item:hover {
     background-color: #bce8f1;
     opacity: 0.8;
 }
 
-#webim  .user-list .avatar {
-    width:50px;
-    height:50px;
-    border-radius: 30px;
-    float:left;
-}
 
 #webim .user-name {
     line-height: 60px;
-    padding-left:5px;
-    float:left;
-    color:#0099FF;
+    padding-left: 5px;
+    float: left;
+    color: #0099FF;
 }
 
-.no-padding
-{
-    padding:0;
+.no-padding {
+    padding: 0;
 }
+
 #webim .chat-list {
-    height:499px;
-    overflow-y:auto;
+    height: 499px;
+    overflow-y: auto;
+    background: whitesmoke;
 }
 
-#webim  .chat-list .msg-item {
+#webim .chat-list .msg-item {
     padding: 5px;
 }
 
-#webim  .chat-list  .notice {
-    color:#0099FF;
-    font-size:12px;
+#webim .chat-list .notice {
+    color: #0099FF;
+    font-size: 12px;
     padding: 10px 0;
 }
 
-#webim  .chat-list .msg-item .msg {
+#webim .chat-list .msg-item .msg {
     background: #d9edf7;
-    line-height:25px;
-    float:left;
-    margin-left:10px;
+    line-height: 25px;
+    float: left;
+    margin-left: 10px;
     border-radius: 5px;
     padding: 0px 5px;
 }
 
 #webim .username {
-    float:left;
-    color:#0099FF;
+    float: left;
+    color: #0099FF;
+    line-height: 56px;
 }
 
-#webim .welcome-message{
+#webim .welcome-message {
     list-style: none;
     text-align: center;
     display: block;
     color: deepskyblue;
 }
 
-#webim .close-message{
+#webim .close-message {
     list-style: none;
     text-align: center;
     display: block;
@@ -89,83 +91,228 @@
 }
 
 #webim .message {
-    height:100px;
-    border-top:1px solid #d6e9c6;
+    height: 100px;
+    border-top: 1px solid #d6e9c6;
 }
 
 #webim .message .text {
-    width:80%;
-    float:left;
-    height:100px;
+    width: 80%;
+    float: left;
+    height: 100px;
 }
 
 #webim .message .text textarea {
-    width:100%;
-    height:100%;
+    width: 100%;
+    height: 100%;
     border: none;
     outline: none;
     padding: 10px;
 }
 
 #webim .message .send {
-    width:20%;
-    float:left;
+    width: 20%;
+    float: left;
     text-align: center;
-    line-height:100px;
+    line-height: 100px;
     color: #0099FF;
-    border-left:1px solid #d6e9c6;
+    border-left: 1px solid #d6e9c6;
     cursor: pointer;
 }
 
-#webim .user-info{
+#webim .room-info {
     display: flex;
-    width:90%;
-    margin: 18px;
+    height: 75px;
+    margin: 7px;
+    /* border-bottom: 1px solid indianred; */
+    background: #f2f4f524;
+    padding: 7px;
 }
-#webim .isme .useravatar    {
-    border: #34cea9  solid 2px;
+
+#webim .isme .userAvatar {
+    border: #34cea9 solid 2px;
     border-radius: 24px;
 
 }
-#webim .user-info span{
-    height:50px;
-    line-height:50px;
+
+#webim .room-info span {
+    height: 50px;
+    line-height: 50px;
 }
-#webim .username{
+
+#webim .username {
     margin-left: 3px;
 }
 
-#webim .chat-message{
+#webim .chat-message {
     text-align: left;
-    display: block;
-    /*display: flex;*/
     color: black;
     list-style: none;
     width: 100%;
     word-break: break-all;
     margin: 10px 0;
     padding-left: 3px;
-    float: left;
 }
-.chat-message .avatar{
-    width:33px;
-    height:33px;
+
+.chat-message div {
+    display: inline-block;
 }
-.chat-message .message-container{
+
+.chat-message .avatar {
+    width: 33px;
+    height: 33px;
+}
+
+.chat-message .message-container {
     padding: 6px;
-    width:43%;
+    width: 43%;
     margin-top: -6px;
     height: max-content;
 }
-.mymessage>.avatar{
-    float:right;
-    margin-right:5px;
-}
 
-.chat-message .messageSpan{
-    background: #79e9a1;
+.chat-message .messageSpan {
+    background: white;
     border-radius: 3px;
     padding: inherit;
     display: inline-table;
     text-align: left;
+}
+
+#register-form {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    padding: 30px;
+    text-align: -webkit-center;
+    background: lightblue;
+    border-radius: 9%;
+    transform: translate(-50%, -50%); /* 50%为自身尺寸的一半 */
+}
+
+.userAvatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    float: left;
+    position: relative;
+}
+
+.userAvatar img {
+    border-radius: 19%;
+}
+
+.selected-room {
+    border: 1px dotted #a3b0be;
+    background: #e4e7e6 !important;
+}
+
+.my-message {
+    float: right;
+}
+
+.my-message .message-container {
+    float: right;
+    text-align: right;
+}
+
+.my-message .avatar-div {
+    float: right;
+    text-align: right;
+}
+
+.my-message .messageSpan {
+    color: black;
+    background: #0ce30c;
+}
+
+.unreadMsgCount {
+    border-radius: 50%;
+    color: white;
+    background: red;
+    text-align: center;
+    line-height: 20px;
+    position: absolute;
+    top: -10px;
+    right: -13px;
+    overflow: hidden;
+}
+
+.unreadMsgCount-more {
+    width: 20px;
+    height: 20px;
+}
+
+.unreadMsgCount-less {
+    width: 10px;
+    height: 10px;
+    top: -3px;
+    right: -4px;
+}
+
+::-webkit-scrollbar {
+    width: 3px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 3px;
+    background: #e4f1e6;
+    -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.08);
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: #f1e3e3;
+    -webkit-box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#friendListContent .avatar {
+    width: 30px;
+    height: 30px;
+}
+
+#friendListContent .user {
+    margin: 5px;
+    display: inline-flex;
+    line-height: 33px;
+    width: 40%;
+}
+
+#friendListContent .user img {
+    margin: 0 5px;
+}
+
+#friendListContent .user .name {
+    height: auto;
+}
+
+#friendListContent .checkbox {
+    display: inline-flex;
+    width: 30px;
+    height: 19px;
+    margin-left: 5px;
+}
+
+#friendListContent {
+    text-align: left;
+}
+
+#friendListContent {
+    width: 600px;
+    height: 400px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    padding: 9px;
+    background: #ced8ce;
+    border-radius: 3%;
+    transform: translate(-50%, -50%);
+    overflow-y: auto;
+    border: #bdc6ce 7px solid;
+}
+
+.welcome-username{
+    color: #4ba8e0;
+    text-decoration: underline;
+
 }

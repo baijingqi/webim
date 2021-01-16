@@ -1,0 +1,31 @@
+
+9
+	readme.md,2\7\275d783e298228506068436512433d343feb52aa
+D
+public/css/style.css,1\e\1ef0e38ec90181a17549647e1a67072ac5d804da
+9
+	index.php,b\b\bb6499b8e938f92a3695fff1afe57edea4b9efb7
+^
+.livesteam/app/Http/Middleware/Authenticate.php,4\d\4d1a864c5edbbb915069e0d9bca36f8f0a066a0d
+B
+public/js/webim.js,6\0\60b4066ee3aff176e81c03f45c93a0b92408f9db
+A
+public/index.html,f\4\f43ecdf8d666ee908aacce037b4cd72159e4741b
+@
+config/webim.php,c\b\cb86f2d6d7a44f009125854825636ee820b5dddf
+K
+livesteam/config/common.php,e\8\e860444286da789e9e239d483034b6149f8be179
+h
+8livesteam/vendor/laravel/lumen-framework/src/helpers.php,0\6\0648b6f3587fdcd0cea4d49c12452cc017fd04d0
+[
++livesteam/storage/logs/lumen-2021-01-02.log,b\3\b3be66048c8410ccf922fdb9517c49a492c14faa
+F
+public/friendList.html,e\4\e4632666ddb8dd7dcee5ed8b436c32e5aecb1555
+a
+1livesteam/app/Http/Controllers/UserController.php,2\c\2cebfe45e7efaca99cc93a4c62eb31acc9138833
+Q
+!livesteam/app/Logic/UserLogic.php,d\3\d3c336c72f38c75e3c74979deb4acb5e4d3a1c3f
+M
+livesteam/app/Models/User.php,1\f\1f42e0322fba6c9faced3643126c62f43ff82c00
+H
+livesteam/routes/web.php,7\8\78a6b79f4143e5f2db2e2fd22214493deb84ed31
