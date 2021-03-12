@@ -18,6 +18,7 @@ class CreateUser extends Migration
             $table->string("username", 30)->default('')->nullable(false)->comment('用户名');
             $table->string("password", 60)->default('')->nullable(false)->comment('密码');
             $table->unsignedInteger("status")->default(1)->nullable(false)->comment('状态 1：正常');
+            $table->string("avatar",150)->default('')->nullable(false)->comment('头像');
             $table->unsignedInteger("created_at")->default(0)->nullable(false)->comment('创建时间');
             $table->unsignedInteger("updated_at")->default(0)->nullable(false)->comment('上次修改时间');
         });

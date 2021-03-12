@@ -1,6 +1,6 @@
 // let wsurl = "ws://192.168.10.10:9501";
 let httpUrl = 'http://livesteam.com';
-let wsUrl = 'ws://192.168.10.10:9501';
+let wsUrl = 'ws://livesteam.wss';
 let layer;
 let curRoomId = 0;
 
@@ -64,13 +64,14 @@ layui.use('layer', function () {
             this.data.server.onopen = function (evt) {
                 console.log('连接成功');
                 console.log(evt);
+                console.log(webim.data.server.readyState);
                 layer.msg('连接成功');
             }
         },
         message: function () {
             this.data.server.onmessage = function (evt) {
                 var data = JSON.parse(evt.data);
-                if (data.type == 1) {
+                if (data.type == 1) { //普通聊天消息
                     if (curRoomId == data['data']['roomId']) {
                         appendChatMsg(data['data']['msgSender'], data['message'], true);
                         scrolleToBottom();
@@ -84,10 +85,15 @@ layui.use('layer', function () {
                             avatars.push(v['avatar']);
                             uids.push(v['id']);
                         });
-                        console.log(roomInfo);
-                        console.log(avatars);
-                        console.log(uids);
-                        appendRoomList(roomInfo['roomInfo']['id'], makeAvatar(avatars, uids, roomInfo['unReadMsgCount']), roomInfo['roomInfo'].name, false);
+
+                        if (!curRoomId) {
+                            //如果当前没有房间
+                            curRoomId = data['data']['roomId'];
+                            appendRoomList(roomInfo['roomInfo']['id'], makeAvatar(avatars, uids, roomInfo['unReadMsgCount']), roomInfo['roomInfo'].name, true);
+                            appendChatMsg(data['data']['msgSender'], data['message'], true);
+                        } else {
+                            appendRoomList(roomInfo['roomInfo']['id'], makeAvatar(avatars, uids, roomInfo['unReadMsgCount']), roomInfo['roomInfo'].name, false);
+                        }
                     }
                 }
             }
@@ -99,6 +105,7 @@ layui.use('layer', function () {
         },
         close: function () {
             this.data.server.onclose = function (evt) {
+                console.log(evt);
                 layer.alert('不妙，链接断开了');
             }
         }
@@ -253,6 +260,7 @@ layui.use('layer', function () {
             appendChatMsg(JSON.parse(getCookie('userInfo')), message, true);
             scrolleToBottom();
         } catch (error) {
+            console.log(error);
             layer.alert('出错啦，消息发送失败');
         }
     });
@@ -369,6 +377,10 @@ layui.use('layer', function () {
     });
     $('#checkFriend').click(function () {
         let objs = $("input[name='checkUsers']:checked");
+        if (!objs.length) {
+            $('#friendListContent').hide();
+            return
+        }
         let ids = [getCookie('uid')];
         $.each(objs, function (k, v) {
             ids.push(v.value);
@@ -417,5 +429,9 @@ layui.use('layer', function () {
             'data': data
         });
     }
+
+    $('.close-btn').click(function () {
+        $(this).parents().find('.close-parent').hide();
+    })
 });
 

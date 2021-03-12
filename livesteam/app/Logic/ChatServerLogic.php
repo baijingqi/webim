@@ -12,6 +12,8 @@ class ChatServerLogic
     public  $config;
     private $redis  = null;
 
+    private $serverName = null;
+
     const MSG_CHAT        = 1; //消息类型 聊天
     const MSG_WELCOME     = 2; //欢迎消息
     const MSG_CLOSE       = 3; //离开消息
@@ -21,10 +23,30 @@ class ChatServerLogic
 
     /**
      * socketServer constructor.
+     *
+     * @param array $params
      */
-    public function __construct()
+    public function __construct(array $params)
     {
-        $config       = config('common.chatServer');
+        $config = config('common.chatServer');
+
+        if (isset($params['port'])) {
+            $config['port'] = $params['port'];
+        }
+
+        if (isset($params['ip'])) {
+            $config['ip'] = $params['ip'];
+        }
+
+        $this->serverName = $this->getIp() . '-' . $config['port'];     //以本机ip+端口作为唯一识别号
+        $this->redis      = app('redis');
+
+        echo $this->serverName . PHP_EOL;
+
+        $res = $this->beforeStartServer($config['ip'], $config['port']);
+        if ($res['status'] < 0) {
+            exit($res['message']);
+        }
         $this->server = new Server($config['ip'], $config['port']);
 
         $this->server->on('open', [
@@ -43,15 +65,56 @@ class ChatServerLogic
             $this,
             'onTask'
         ]);
+        $this->server->on('WorkerStart', [
+            $this,
+            'onWorkerStart'
+        ]);
 
         $this->server->set([
             'task_worker_num' => 2,
             'worker_num'      => 2
         ]);
+        $this->registerServer($config['ip'], $config['port']);
 
-        $this->redis = app('redis');
         echo "服务启动\n";
         $this->server->start();
+    }
+
+    public function onWorkerStart(Server $server, $workerId)
+    {
+        if (!$server->taskworker && $workerId == 1) {
+            $redis = new \Redis();
+            $redis->pconnect(env('REDIS_HOST'), env('REDIS_PORT'));
+            $redis->setOption(\Redis::OPT_READ_TIMEOUT, -1);
+            $redis->subscribe([$this->serverName], function ($redis, $chan, $msg) use (&$server) {
+                $server->task(json_decode($msg, true));
+            });
+        }
+    }
+
+    /**
+     * @param $listenIp
+     * @param $port
+     *
+     * @return array
+     */
+    public function beforeStartServer($listenIp, $port)
+    {
+        if ($this->redis->sIsMember(makeCacheKey("chatServerList"), $this->serverName)) {
+            return makeStdRes(-1, '服务名' . $this->serverName . '已被占用');
+        }
+        return makeStdRes(1, '');
+    }
+
+
+    public function getIp()
+    {
+        return getHostByName(getHostName());
+    }
+
+    public function registerServer($listenIp, $port)
+    {
+        $this->redis->sAdd(makeCacheKey("chatServerList"), $this->serverName);
     }
 
     /**
@@ -83,6 +146,7 @@ class ChatServerLogic
      */
     public function openInit($fd, $uid)
     {
+        $this->redis->set(makeCacheKey('uidBelongServer', [$uid]), $this->serverName);  //通过uid找到对应服务
         $this->redis->set(makeCacheKey('fdUid', [$fd]), $uid);  //通过文件描述符id找到对应uid
         $this->redis->set(makeCacheKey('uidFd', [$uid]), $fd);  //通过uid找到对应文件描述符id
 
@@ -136,11 +200,10 @@ class ChatServerLogic
                     self::MSG_CHAT
                 ]);
                 break;
-
+            default:
+                break;
         }
-
     }
-
 
     /**
      * @param $server
@@ -165,26 +228,32 @@ class ChatServerLogic
             $msgType
         ] = $data;
         $msgSender = UserLogic::getUser($msgSenderUid);
+
         switch ($msgType) {
             case self::MSG_CHAT:
                 $roomConnections = $this->redis->sMembers(makeCacheKey('roomConnectionInfo', [$roomId]));
-                var_dump($roomConnections);
                 foreach ($roomConnections as $value) {
                     [
                         $uid,
                         $fd
                     ] = explode('-', $value);
+                    $serverName = $this->redis->get(makeCacheKey('uidBelongServer', [$uid]));
+
                     if ($uid != $msgSenderUid) {
                         echo "向{$fd}发送{$message}" . PHP_EOL;
-                        $this->server->push($fd, $this->makeResponseMsg($msgType, $message, [
+                        $sendData = $this->makeResponseMsg($msgType, $message, [
                             'msgSender' => $msgSender,
                             'roomId'    => $roomId
-                        ]));
+                        ]);
+                        if ($serverName != $this->serverName) {
+                            $this->redis->publish($serverName, json_encode($data));
+                        } else {
+                            $this->server->push($fd, $sendData);
+                        }
                     }
                 }
                 break;
         }
-
     }
 
     public function makeResponseMsg(int $type, $message, array $data = [])

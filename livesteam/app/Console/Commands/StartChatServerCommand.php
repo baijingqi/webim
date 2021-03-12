@@ -13,7 +13,7 @@ class StartChatServerCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'startChatServer';
+    protected $signature = 'startChatServer {--ip=} {--port=}';
 
     /**
      * 命令描述
@@ -38,6 +38,9 @@ class StartChatServerCommand extends Command
      */
     public function handle()
     {
-        $obj = new ChatServerLogic();
+//        $redis = app('redis');
+//        $redis->publish("127.0.1.1-9501", "xxxx");
+        $obj = new ChatServerLogic($this->options());
     }
+
 }
