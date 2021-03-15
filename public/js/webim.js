@@ -143,24 +143,84 @@ layui.use('layer', function () {
 
     function makeAvatar(avatars, uids, unreadMsgCount = 0) {
         let str = '<div class=\'userAvatar\'>';
-        len = avatars.length;
-        let imgW = imgH = 60;
-
-        if (len > 2) {
-            imgW /= len;
-            imgH /= len;
-        }
+        let len = avatars.length;
         let curUid = getCookie('uid');
-
-        $.each(avatars, function (k, v) {
-            if (len > 2) {
-                str += "<img src='" + v + "' style='max-width: " + imgW + "px;max-height: " + imgH + "px'  class='avatar' dataUid='" + uids[k] + "'>";
-            } else {
-                if (uids[k] != curUid) {
-                    str += "<img src='" + v + "' style='max-width: " + imgW + "px;max-height: " + imgH + "px'  class='avatar' dataUid='" + uids[k] + "'>";
+        if (len == 2) {
+            $.each(avatars, function (k, v) {
+                if (uids[k] == curUid) {
+                    avatars.splice(k, 1);
+                    uids.splice(k, 1);
                 }
+            });
+        }
+        let arr = [];
+        console.log("len="+len);
+        switch (len) {
+            case 1:
+            case 2:
+                arr = [
+                    [[60, 60]]
+                ];
+                break;
+            case 3:
+                arr = [
+                    [[30, 30]],
+                    [[30, 30], [30, 30]]
+                ];
+                break;
+            case 4:
+                arr = [
+                    [[30, 30], [30, 30]],
+                    [[30, 30], [30, 30]]
+                ];
+                break;
+            case 5:
+                arr = [
+                    [[20, 30], [20, 30]],
+                    [[20, 30], [20, 30], [20, 30]],
+                ];
+                break;
+            case 6:
+                arr = [
+                    [[20, 30], [20, 30], [20, 30]],
+                    [[20, 30], [20, 30], [20, 30]]
+                ];
+                break;
+            case 7:
+                arr = [
+                    [[20, 20]],
+                    [[20, 20], [20, 20], [20, 20]],
+                    [[20, 20], [20, 20], [20, 20]],
+                ];
+                break;
+            case 8:
+                arr = [
+                    [[20, 20], [20, 20]],
+                    [[20, 20], [20, 20], [20, 20]],
+                    [[20, 20], [20, 20], [20, 20]],
+                ];
+                break;
+            case 9:
+                arr = [
+                    [[20, 20], [20, 20], [20, 20]],
+                    [[20, 20], [20, 20], [20, 20]],
+                    [[20, 20], [20, 20], [20, 20]],
+                ];
+                break;
+        }
+        let num = 0;
+        for (let i = 0; i < arr.length; i++) {
+            str += "<div style='text-align: center'>";
+            for (let j = 0; j < arr[i].length; j++) {
+                if (num == len) {
+                    break;
+                }
+                str += "<img src='" + avatars[num] + "' style='max-width: " + arr[i][j][0] + "px;max-height: " + arr[i][j][1] + "px'  class='avatar' dataUid='" + uids[num] + "'>";
+                num++
             }
-        });
+            str += "</div>";
+        }
+
         str += makeUnreadMark(unreadMsgCount);
         str += "</div>";
         return str;

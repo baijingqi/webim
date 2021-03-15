@@ -41,7 +41,6 @@ class ChatServerLogic
         $this->serverName = $this->getIp() . '-' . $config['port'];     //以本机ip+端口作为唯一识别号
         $this->redis      = app('redis');
 
-        echo $this->serverName . PHP_EOL;
 
         $res = $this->beforeStartServer($config['ip'], $config['port']);
         if ($res['status'] < 0) {
@@ -71,12 +70,14 @@ class ChatServerLogic
         ]);
 
         $this->server->set([
-            'task_worker_num' => 2,
-            'worker_num'      => 2
+            'task_worker_num'          => 2,
+            'worker_num'               => 2,
+            'heartbeat_check_interval' => 5,
+            'heartbeat_idle_time'      => 600,
         ]);
         $this->registerServer($config['ip'], $config['port']);
 
-        echo "服务启动\n";
+        echo $this->serverName . '服务启动' . PHP_EOL;
         $this->server->start();
     }
 
