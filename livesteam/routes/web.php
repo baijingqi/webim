@@ -21,9 +21,16 @@ $router->group([
     'prefix'     => '',
     'middleware' => 'apiAuth',
 ], function () use ($router) {
+    //好友列表
     $router->post('friendList', "UserController@friendList");
+    //用户房间列表
     $router->post('userRoomList', "RoomController@userRoomList");
+    //创建房间
     $router->post('createRoom', "RoomController@createRoom");
+    //获取房间信息
     $router->post('roomInfo', "RoomController@roomInfo");
+    //获取聊天记录
     $router->post('roomChatMsgList', "ChatMsgController@roomChatMsgList");
 });
+//发送广播消息
+$router->post('addBroadcastMsg', "ChatMsgController@addBroadcastMsg");

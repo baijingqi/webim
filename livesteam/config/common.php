@@ -1,26 +1,12 @@
 <?php
 return [
-    'redis'      => [
-        'client'  => env('REDIS_CLIENT', 'phpredis'),
-        'cluster' => env('REDIS_CLUSTER', false),
-
-        'default' => [
-            'host'     => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port'     => env('REDIS_PORT', 6379),
-            'database' => env('REDIS_DB', 0),
-        ],
-
-        'cache' => [
-            'host'     => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port'     => env('REDIS_PORT', 6379),
-            'database' => env('REDIS_CACHE_DB', 1),
-        ],
-    ],
+    'default' => env('DB_CONNECTION', 'mysql'),
     'chatServer' => [
-        'ip'   => '0.0.0.0',
-        'port' => 9501
+        'ip'             => '0.0.0.0',
+        'port'           => 9501,
+        'public_channel' => [
+            'CHAT_SERVER_PUBLIC_CHANNEL'
+        ]
     ],
     'avatars'    => [
         'https://img2.woyaogexing.com/2020/12/29/8de039d1dcce409db73a8d2f016d1d74!400x400.jpeg',

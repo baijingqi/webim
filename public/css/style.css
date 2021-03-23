@@ -192,9 +192,10 @@ html, body {
     width: 62px;
     height: 60px;
     border-radius: 7px;
-    float: left;
-    position: relative;
     background: lightgrey;
+    display: flex;
+    align-items: center;
+    position: relative;
 }
 
 .userAvatar img {
@@ -315,5 +316,46 @@ html, body {
 .welcome-username{
     color: #4ba8e0;
     text-decoration: underline;
+}
 
+#broadcast-container {
+    /*flex 布局*/
+    display: flex;
+    /*实现垂直居中*/
+    align-items: center;
+    /*实现水平居中*/
+    justify-content: center;
+    text-align: justify;
+}
+/* 定义keyframe动画，命名为blink */
+@keyframes blink{
+    0%{opacity: 1;}
+    100%{opacity: 0;}
+}
+/* 添加兼容性前缀 */
+@-webkit-keyframes blink {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+@-moz-keyframes blink {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+@-ms-keyframes blink {
+    0% {opacity: 1; }
+    100% { opacity: 0;}
+}
+@-o-keyframes blink {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+/* 定义blink类*/
+.blink{
+    color: #d87553;
+    animation: blink 2s linear infinite;
+    /* 其它浏览器兼容性前缀 */
+    -webkit-animation: blink 2s linear infinite;
+    -moz-animation: blink 2s linear infinite;
+    -ms-animation: blink 2s linear infinite;
+    -o-animation: blink 2s linear infinite;
 }

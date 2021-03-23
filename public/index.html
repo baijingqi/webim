@@ -21,11 +21,16 @@
     <div class="col-xs-10 col-xs-offset-1" style="">
         <div class="panel panel-info">
             <div style="display: flex">
-                <div class="panel-heading" id="welcomeMsg">
-                    PHP + Swoole 简易聊天室
+                <div class="col-xs-3" style="display: inherit">
+                    <div class="panel-heading" id="welcomeMsg">
+                        PHP + Swoole 简易聊天室
+                    </div>
+                    <div>
+                        <button class="btn btn-info" style="margin-top: 12px;" id="registerNewRoom">新建群聊</button>
+                    </div>
                 </div>
-                <div>
-                    <button class="btn btn-info" style="margin-top: 4px;" id="registerNewRoom">新建群聊</button>
+
+                <div class="col-xs-9 " id="broadcast-container">
                 </div>
             </div>
             <div class="panel-body no-padding">
@@ -52,7 +57,7 @@
             <input type="text" class="form-control" id="username" placeholder="请输入用户名">
         </div>
         <div class="form-group">
-            <input type="password" id="password" class="form-control" placeholder="请输入密码">
+            <input type="password" id="password" value="123456" class="form-control" placeholder="请输入密码">
         </div>
         <div class="form-group">
             <button id="login" class="btn btn-success">注册/登录</button>

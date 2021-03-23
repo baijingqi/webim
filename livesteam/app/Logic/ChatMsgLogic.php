@@ -23,9 +23,9 @@ class ChatMsgLogic
 
         $userInfos = UserLogic::batchGetUser(array_column($messages, 'uid'));
         $times     = [];
-        $res = [];
+        $res       = [];
         foreach ($messages as $key => $value) {
-            $value->userInfo = $userInfos[$value->uid];
+            $value->userInfo     = $userInfos[$value->uid];
             $value->createdAtStr = date('Y-m-d H:i:s', $value->createdAt);
         }
         //清除该房间未读消息数
@@ -66,7 +66,7 @@ class ChatMsgLogic
      *
      * @return int|mixed
      */
-    public static function addChatMsg(int $uid, int $roomId, string $content)
+    public static function addChatMsg(int $uid, int $roomId, string $content, &$chatServer = null)
     {
         $arr = [
             'uid'        => $uid,
@@ -74,22 +74,40 @@ class ChatMsgLogic
             'content'    => $content,
             'created_at' => time(),
         ];
-        $id  = DB::table(self::TBL_NAME)->insertGetId($arr);
-        if ($id) {
-            $userIds = RoomLogic::getUidByRoomId($roomId);
-            $redis   = app('redis');
-            //增加该房间用户的未读消息数量
-            foreach ($userIds as $key => $id) {
-                if ($id != $uid) {
-                    $redis->incr(makeCacheKey('unReadRoomMsgCount', [
-                        $uid,
-                        $roomId
-                    ]));
-                }
+        if ($chatServer) {
+            $db = $chatServer->db;
+        } else {
+            $db = DB::table(self::TBL_NAME);
+        }
+        $id = $db->insertGetId($arr);
+        if (empty($id)) return false;
+
+        $userIds = RoomLogic::getUidByRoomId($roomId);
+        $redis   = app('redis');
+        //增加该房间用户的未读消息数量
+        foreach ($userIds as $key => $id) {
+            if ($id != $uid) {
+                $redis->incr(makeCacheKey('unReadRoomMsgCount', [
+                    $uid,
+                    $roomId
+                ]));
             }
         }
         return $id;
     }
 
+    /**
+     * 添加广播信息
+     *
+     * @param string $msg
+     */
+    public static function addBroadcastMsg(string $msg)
+    {
+        $publicChannel = config('common.chatServer')['public_channel'];
+        $redis         = app('redis');
+        foreach ($publicChannel as $channel) {
+            $redis->publish($channel, json_encode([0, $msg, 0, ChatServerLogic::MSG_BROADCAST]));
+        }
+    }
 
 }

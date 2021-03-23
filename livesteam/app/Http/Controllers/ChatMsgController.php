@@ -24,4 +24,22 @@ class ChatMsgController extends Controller
         return makeStdJson(ChatMsgLogic::getFormatRoomChatMsgList($request['roomId'], $uid, $request['page'], $request['size']));
     }
 
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addBroadcastMsg(Request $request)
+    {
+        $params    = $request->all();
+        $validator = Validator::make($params, [
+            'msg' => 'bail|required|string',
+        ], ['参数错误']);
+        if ($validator->fails()) {
+            return makeStdJson([], Response::HTTP_UNAUTHORIZED, $validator->errors()->first());
+        }
+        ChatMsgLogic::addBroadcastMsg($params['msg']);
+        return makeStdJson([], Response::HTTP_OK);
+    }
+
 }

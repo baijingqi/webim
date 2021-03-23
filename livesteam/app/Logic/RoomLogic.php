@@ -60,17 +60,16 @@ class RoomLogic
      */
     public static function getUidByRoomId(int $roomId)
     {
-
         $cacheKey = makeCacheKey('roomUserIds', [$roomId]);
         $redis    = app('redis');
-        $ids      = $data = $redis->sMembers($cacheKey);
-        if ($ids) {
-            return $ids;
+        $uids     = $redis->sMembers($cacheKey);
+        if ($uids) {
+            return $uids;
         }
 
-        $ids = DB::table(self::TBL_NAME)->where('room_id', $roomId)->select('uid')->get()->toArray();
-        $res = [];
-        foreach ($ids as $value) {
+        $uids = DB::table(self::TBL_NAME)->where('room_id', $roomId)->select('uid')->get()->toArray();
+        $res  = [];
+        foreach ($uids as $value) {
             $redis->sAdd($cacheKey, $value->uid);
             $res[] = $value->uid;
         }
@@ -88,7 +87,7 @@ class RoomLogic
     {
         $cacheKey = makeCacheKey('userRoomIds', [$userId]);
         $redis    = app('redis');
-        $ids      = $data = $redis->sMembers($cacheKey);
+        $ids      = $redis->sMembers($cacheKey);
         if ($ids) {
             return $ids;
         }
@@ -112,7 +111,6 @@ class RoomLogic
      */
     public static function createRoom(int $ownerUid, array $userIds)
     {
-
         $ownerChatUsers = [];
         foreach ($userIds as $userId) {
             if ($userId != $ownerUid) {
@@ -184,11 +182,11 @@ class RoomLogic
 
         //将用户加入到redis连接集合中
         //将当前在线的用户的uid加入房间的redis集合中
-        $userIds = RoomLogic::getUidByRoomId($roomId);
+        $userIds       = RoomLogic::getUidByRoomId($roomId);
         $connectionKey = makeCacheKey('roomConnectionInfo', [$roomId]);
         foreach ($userIds as $uid) {
-            $fd       = $redis->get(makeCacheKey('uidFd', [$uid]));
-            if($fd){
+            $fd = $redis->get(makeCacheKey('uidFd', [$uid]));
+            if ($fd) {
                 $redis->sAdd($connectionKey, $uid . '-' . $fd);
             }
         }

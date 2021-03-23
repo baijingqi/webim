@@ -3,6 +3,7 @@ let httpUrl = 'http://livesteam.com';
 let wsUrl = 'ws://livesteam.wss';
 let layer;
 let curRoomId = 0;
+let connectRooms = {};
 
 $('#login').click(function () {
     let username = $('#username').val();
@@ -41,7 +42,7 @@ layui.use('layer', function () {
 
     function init() {
         let userInfo = JSON.parse(getCookie('userInfo'));
-        $('#welcomeMsg').html("欢迎您:" + "<span class='welcome-username'>" + userInfo['username'] + "</span>");
+        $('#welcomeMsg').html("<img src='" + userInfo['avatar'] + "' style='width: 40px;height: 40px'><span class='welcome-username'>  " + userInfo['username'] + "</span>");
     }
 
     init();
@@ -53,6 +54,10 @@ layui.use('layer', function () {
             server: null,
             myInfo: null
         },
+        timer: function () {
+            console.log('心跳保持。。。');
+            webim.data.server.send(0x9);
+        },
         init: function () {
             this.data.server = new WebSocket(wsurl);
             this.open();
@@ -62,22 +67,19 @@ layui.use('layer', function () {
         },
         open: function () {
             this.data.server.onopen = function (evt) {
-                console.log('连接成功');
-                console.log(evt);
-                console.log(webim.data.server.readyState);
+                // console.log('连接成功');
+                // console.log(evt);
+                // console.log(webim.data.server.readyState);
                 layer.msg('连接成功');
+                webim.keepConnection()
             }
         },
         message: function () {
             this.data.server.onmessage = function (evt) {
-                var data = JSON.parse(evt.data);
-                if (data.type == 1) { //普通聊天消息
-                    if (curRoomId == data['data']['roomId']) {
-                        appendChatMsg(data['data']['msgSender'], data['message'], true);
-                        scrolleToBottom();
-                    } else if ($(".room-info[dataroomid='" + data['data']['roomId'] + "']").length > 0) {
-                        addUnreadMark(data['data']['roomId']);
-                    } else {
+                let data = JSON.parse(evt.data);
+                switch (data.type) {
+                    case 1:
+                        //普通聊天消息
                         let roomInfo = getRoomInfo(data['data']['roomId']);
                         let avatars = [];
                         let uids = [];
@@ -85,16 +87,28 @@ layui.use('layer', function () {
                             avatars.push(v['avatar']);
                             uids.push(v['id']);
                         });
-
-                        if (!curRoomId) {
-                            //如果当前没有房间
+                        if (curRoomId !== 0) {  //说明现在列表有房间
+                            if (curRoomId == data['data']['roomId']) {
+                                appendChatMsg(data['data']['msgSender'], data['message'], true);
+                                scrolleToBottom();
+                            } else {
+                                if (connectRooms[data['data']['roomId']]) {
+                                    addUnreadMark(data['data']['roomId']);
+                                } else {
+                                    appendRoomList(roomInfo['roomInfo']['id'], makeAvatar(avatars, uids, roomInfo['unReadMsgCount']), roomInfo['roomInfo'].name, false);
+                                    addUnreadMark(data['data']['roomId']);
+                                }
+                            }
+                        } else {
+                            //当前没有房间
                             curRoomId = data['data']['roomId'];
                             appendRoomList(roomInfo['roomInfo']['id'], makeAvatar(avatars, uids, roomInfo['unReadMsgCount']), roomInfo['roomInfo'].name, true);
                             appendChatMsg(data['data']['msgSender'], data['message'], true);
-                        } else {
-                            appendRoomList(roomInfo['roomInfo']['id'], makeAvatar(avatars, uids, roomInfo['unReadMsgCount']), roomInfo['roomInfo'].name, false);
                         }
-                    }
+                        break;
+                    case 6:
+                        $('#broadcast-container').html("<p class=\"blink\">🔊 " + data['message'] + "</p>\n");
+                        break;
                 }
             }
         },
@@ -106,10 +120,15 @@ layui.use('layer', function () {
         close: function () {
             this.data.server.onclose = function (evt) {
                 console.log(evt);
+                clearInterval(webim.timer);
                 layer.alert('不妙，链接断开了');
             }
+        },
+        keepConnection: function () {
+            setInterval(webim.timer, 10000);
         }
     };
+
 
     webim.init();
 
@@ -117,7 +136,9 @@ layui.use('layer', function () {
         return $.cookie(key)
     }
 
+    let rooms = {};
     function getRoomInfo(roomId) {
+        if (rooms[roomId]) return rooms[roomId];
         let rst = {};
         $.ajax({
             url: httpUrl + "/roomInfo",
@@ -131,6 +152,7 @@ layui.use('layer', function () {
             },
         }).done(function (res) {
             rst = res.data;
+            rooms[roomId] = res.data;
             // console.log("ajax success");
         }).fail(function (err) {
             // console.log("ajax error");
@@ -142,7 +164,7 @@ layui.use('layer', function () {
     }
 
     function makeAvatar(avatars, uids, unreadMsgCount = 0) {
-        let str = '<div class=\'userAvatar\'>';
+        let str = '<div class=\'userAvatar\'><div class="avatar-container">';
         let len = avatars.length;
         let curUid = getCookie('uid');
         if (len == 2) {
@@ -154,7 +176,7 @@ layui.use('layer', function () {
             });
         }
         let arr = [];
-        console.log("len="+len);
+        console.log("len=" + len);
         switch (len) {
             case 1:
             case 2:
@@ -182,8 +204,8 @@ layui.use('layer', function () {
                 break;
             case 6:
                 arr = [
-                    [[20, 30], [20, 30], [20, 30]],
-                    [[20, 30], [20, 30], [20, 30]]
+                    [[20, 20], [20, 20], [20, 20]],
+                    [[20, 20], [20, 20], [20, 20]]
                 ];
                 break;
             case 7:
@@ -215,14 +237,14 @@ layui.use('layer', function () {
                 if (num == len) {
                     break;
                 }
-                str += "<img src='" + avatars[num] + "' style='max-width: " + arr[i][j][0] + "px;max-height: " + arr[i][j][1] + "px'  class='avatar' dataUid='" + uids[num] + "'>";
+                str += "<img src='" + avatars[num] + "' style='width: " + arr[i][j][0] + "px;height: " + arr[i][j][1] + "px'  class='avatar' dataUid='" + uids[num] + "'>";
                 num++
             }
             str += "</div>";
         }
 
         str += makeUnreadMark(unreadMsgCount);
-        str += "</div>";
+        str += "</div></div>";
         return str;
     }
 
@@ -242,7 +264,7 @@ layui.use('layer', function () {
             unreadCount = parseInt(findMark.text()) + 1;
         }
         obj.find('.unreadMsgCount').remove();
-        obj.find('.userAvatar').append(makeUnreadMark(unreadCount));
+        obj.find('.avatar-container').append(makeUnreadMark(unreadCount));
     }
 
     function appendRoomList(roomId, makeAvatarStr, name, selected = false) {
@@ -254,6 +276,7 @@ layui.use('layer', function () {
             makeAvatarStr +
             "<div class='username'>" + name + "</div>" +
             "</div>";
+        connectRooms[roomId] = 1;
         $('#webim .room-list').append(str);
     }
 
