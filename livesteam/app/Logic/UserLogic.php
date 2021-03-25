@@ -65,22 +65,26 @@ class UserLogic
     }
 
     /**
-     * @param int $uid
+     * @param int  $uid
+     * @param null $chatServer
      *
      * @return array|\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Query\Builder|mixed|object|null
      */
-    public static function getUser(int $uid)
+    public static function getUser(int $uid, &$chatServer = null)
     {
-        $redis = app('redis');
-        if ($user = $redis->get(makeCacheKey('userInfo', [$uid]))) {
-            return json_decode($user);
+        if ($chatServer) {
+            $db    = $chatServer->db->table(self::TBL_NAME);
+            $redis = $chatServer->redis;
+        } else {
+            $db    = DB::table(self::TBL_NAME);
+            $redis = app('redis');
         }
-        $user = DB::table(self::TBL_NAME)->select(User::$select)->where('id', $uid)->first();
-        if (empty($user)) {
-            return [];
-        }
+        if ($user = $redis->get(makeCacheKey('userInfo', [$uid]))) return json_decode($user);
 
-        app('redis')->set(makeCacheKey('userInfo', [$uid]), json_encode($user));
+        $user = $db->select(User::$select)->where('id', $uid)->first();
+        if (empty($user)) return [];
+
+        $redis->set(makeCacheKey('userInfo', [$uid]), json_encode($user));
         return $user;
     }
 

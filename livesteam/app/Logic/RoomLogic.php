@@ -54,20 +54,28 @@ class RoomLogic
     /**
      * 获取房间的用户id
      *
-     * @param int $roomId
+     * @param int  $roomId
+     * @param null $chatServer
      *
      * @return array
      */
-    public static function getUidByRoomId(int $roomId)
+    public static function getUidByRoomId(int $roomId, &$chatServer = null)
     {
+        if ($chatServer) {
+            $db    = $chatServer->db->table(self::TBL_NAME);
+            $redis = $chatServer->redis;
+        } else {
+            $db    = DB::table(self::TBL_NAME);
+            $redis = app('redis');
+        }
+
         $cacheKey = makeCacheKey('roomUserIds', [$roomId]);
-        $redis    = app('redis');
         $uids     = $redis->sMembers($cacheKey);
         if ($uids) {
             return $uids;
         }
 
-        $uids = DB::table(self::TBL_NAME)->where('room_id', $roomId)->select('uid')->get()->toArray();
+        $uids = $db->where('room_id', $roomId)->select('uid')->get()->toArray();
         $res  = [];
         foreach ($uids as $value) {
             $redis->sAdd($cacheKey, $value->uid);
@@ -79,20 +87,28 @@ class RoomLogic
     /**
      * 获取用户加入的房间id
      *
-     * @param int $userId
+     * @param int  $userId
+     * @param null $chatServer
      *
      * @return array
      */
-    public static function getUserRoomIds(int $userId)
+    public static function getUserRoomIds(int $userId, &$chatServer = null)
     {
+        if ($chatServer) {
+            $db    = $chatServer->db->table(self::TBL_NAME);
+            $redis = $chatServer->redis;
+        } else {
+            $db    = DB::table(self::TBL_NAME);
+            $redis = app('redis');
+        }
+
         $cacheKey = makeCacheKey('userRoomIds', [$userId]);
-        $redis    = app('redis');
         $ids      = $redis->sMembers($cacheKey);
         if ($ids) {
             return $ids;
         }
 
-        $ids = DB::table(self::TBL_NAME)->where('uid', $userId)->select('room_id')->get()->toArray();
+        $ids = $db->where('uid', $userId)->select('room_id')->get()->toArray();
         $res = [];
         foreach ($ids as $value) {
             $redis->sAdd($cacheKey, $value->room_id);

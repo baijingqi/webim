@@ -2,7 +2,6 @@
 
 namespace App\Logic;
 
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Swoole\Http\Request;
 use Swoole\WebSocket\Server;
@@ -77,6 +76,14 @@ class ChatServerLogic
             $this,
             'onWorkerStart'
         ]);
+        $server->on('start', [
+            $this,
+            'onStart'
+        ]);
+        $server->on('WorkerExit', [
+            $this,
+            'onWorkerExit'
+        ]);
         $server->set([
             'task_worker_num'          => 2,
             'worker_num'               => 3,
@@ -113,13 +120,18 @@ class ChatServerLogic
 
         if (!$server->taskworker && $workerId == 0) {
             echo $workerId . "号 worker 开始监听" . PHP_EOL;
-
             $server->redis->subscribe($this->config['public_channel'], function ($redis, $chan, $msg) use (&$server) {
                 echo "接收到订阅消息" . var_export($msg, true) . PHP_EOL;
                 $server->task(json_decode($msg, true));
             });
         }
+
         echo $workerId . "号 worker ready...." . PHP_EOL;
+    }
+
+    public function onWorkerExit(Server $server, $workerId)
+    {
+        $server->redis->close();
     }
 
     /**
@@ -131,12 +143,6 @@ class ChatServerLogic
             return makeStdRes(-1, '服务名' . $this->serverName . '已被占用');
         }
         return makeStdRes(1, '');
-    }
-
-
-    public function getIp()
-    {
-        return getHostByName(getHostName());
     }
 
     public function registerServer()
@@ -168,11 +174,19 @@ class ChatServerLogic
         $server->redis->set(makeCacheKey('uidFd', [$uid]), $request->fd);  //通过uid找到对应文件描述符id
 
         //将用户的uid加入房间的redis集合中
-        $roomIds = $this->getUserRoomIds($uid, $server);
+        $roomIds = RoomLogic::getUserRoomIds($uid, $server);
         foreach ($roomIds as $id) {
             $cacheKey = makeCacheKey('roomConnectionInfoUser', [$id]);
             $server->redis->sAdd($cacheKey, $uid);
         }
+    }
+
+    /**
+     * @param $server
+     */
+    public function onStart(Server $server)
+    {
+        cli_set_process_title('reload_chat_server');
     }
 
     /**
@@ -181,18 +195,17 @@ class ChatServerLogic
      */
     public function onMessage(Server $server, Frame $frame)
     {
-
         $requestData = json_decode($frame->data, true);
         $userInfo    = json_decode($requestData['userInfo']);
         $type        = $requestData['type'];
+
         switch ($type) {
             //聊天消息
             case self::MSG_CHAT:
                 echo "接到信息" . $frame->data . PHP_EOL;
                 $roomId = $requestData['data']['roomId'];
-
-                $this->addChatMsg(intval($userInfo->id), intval($roomId), $requestData['data']['chatMsg'], $server);
-                $res = $server->task($this->makeTaskPushData($roomId, $requestData['data']['chatMsg'], $userInfo->id, self::MSG_CHAT));
+                ChatMsgLogic::addChatMsg(intval($userInfo->id), intval($roomId), $requestData['data']['chatMsg'], $server);
+                $server->task($this->makeTaskPushData($roomId, $requestData['data']['chatMsg'], $userInfo->id, self::MSG_CHAT));
                 break;
             default:
                 break;
@@ -237,7 +250,7 @@ class ChatServerLogic
         $server->redis->sRem(makeCacheKey('serverUsers', [$this->serverName]), $uid . '-' . $fd);
 
         //将用户的uid从房间的redis中移除
-        $roomIds = $this->getUserRoomIds($uid, $server);
+        $roomIds = RoomLogic::getUserRoomIds($uid, $server);
         foreach ($roomIds as $id) {
             $cacheKey = makeCacheKey('roomConnectionInfoUser', [$id]);
             $server->redis->sRem($cacheKey, $uid);
@@ -258,7 +271,7 @@ class ChatServerLogic
         $toUid   = $data['toUid'];
         $msgType = $data['msgType'];
 
-        $msgSender = empty($fromUid) ? [] : $this->getUser($fromUid, $server);
+        $msgSender = empty($fromUid) ? [] : UserLogic::getUser($fromUid, $server);
         $sendData  = $this->makeResponseMsg($msgType, $message, [
             'msgSender' => $msgSender,
             'roomId'    => $roomId
@@ -285,7 +298,7 @@ class ChatServerLogic
                                 echo "当前taskId:{$task_id}, 群聊信息：向 $fd 发送 {$message}" . PHP_EOL;
                             } else {
                                 echo "当前taskId:{$task_id} 群聊信息： {$fd} 不存在已删除" . PHP_EOL;
-                                $server->redis->sRem($cacheKey, $value);
+                                $server->redis->sRem($cacheKey, $uid);
                             }
                         }
                     }
@@ -316,120 +329,17 @@ class ChatServerLogic
                     $server->push($fd, $sendData);
                 }
                 break;
-            case self::MSG_CREATE_ROOM:
-                $users = $this->getUidByRoomId($roomId, $server);
-
+            default:
+                break;
         }
     }
 
-    public function makeResponseMsg(int $type, $message, array $data = [])
+    private function makeResponseMsg(int $type, $message, array $data = [])
     {
         return json_encode([
             'type'    => $type,
             'message' => $message,
             'data'    => $data
         ]);
-    }
-
-    /**
-     * 获取用户加入的房间
-     *
-     * @param $userId
-     * @param $server
-     *
-     * @return array
-     */
-    public function getUserRoomIds($userId, &$server)
-    {
-        $cacheKey = makeCacheKey('userRoomIds', [$userId]);
-        $ids      = $server->redis->sMembers($cacheKey);
-        if ($ids) {
-            return $ids;
-        }
-
-        $ids = $server->db->table('room_user')->where('uid', $userId)->select('room_id')->get()->toArray();
-        $res = [];
-        foreach ($ids as $value) {
-            $server->redis->sAdd($cacheKey, $value->room_id);
-            $res[] = $value->room_id;
-        }
-        return $res;
-    }
-
-    /**
-     * @param int $uid
-     * @param     $server
-     *
-     * @return array|\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Query\Builder|mixed|object|null
-     */
-    public function getUser(int $uid, &$server)
-    {
-        if ($user = $server->redis->get(makeCacheKey('userInfo', [$uid]))) {
-            return json_decode($user);
-        }
-        $user = $server->db->table('user')->select(User::$select)->where('id', $uid)->first();
-        if (empty($user)) {
-            return [];
-        }
-
-        $server->redis->set(makeCacheKey('userInfo', [$uid]), json_encode($user));
-        return $user;
-    }
-
-    /**
-     * @param int    $uid
-     * @param int    $roomId
-     * @param string $content
-     * @param        $server
-     *
-     * @return int|mixed
-     */
-    public function addChatMsg(int $uid, int $roomId, string $content, $server)
-    {
-        $arr = [
-            'uid'        => $uid,
-            'room_id'    => $roomId,
-            'content'    => $content,
-            'created_at' => time(),
-        ];
-        $id  = $server->db->table('chat_message')->insertGetId($arr);
-        if (empty($id)) return false;
-
-        $userIds = $this->getUidByRoomId($roomId, $server);
-        //增加该房间用户的未读消息数量
-        foreach ($userIds as $key => $id) {
-            if ($id != $uid) {
-                $server->redis->incr(makeCacheKey('unReadRoomMsgCount', [
-                    $uid,
-                    $roomId
-                ]));
-            }
-        }
-        return $id;
-    }
-
-    /**
-     * 获取房间的用户id
-     *
-     * @param int $roomId
-     * @param     $server
-     *
-     * @return array
-     */
-    public function getUidByRoomId(int $roomId, &$server)
-    {
-        $cacheKey = makeCacheKey('roomUserIds', [$roomId]);
-        $uids     = $server->redis->sMembers($cacheKey);
-        if ($uids) {
-            return $uids;
-        }
-
-        $uids = $server->db->table('room_user')->where('room_id', $roomId)->select('uid')->get()->toArray();
-        $res  = [];
-        foreach ($uids as $value) {
-            $server->redis->sAdd($cacheKey, $value->uid);
-            $res[] = $value->uid;
-        }
-        return $res;
     }
 }
