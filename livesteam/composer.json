@@ -12,7 +12,8 @@
         "php": "^7.3|^8.0",
         "laravel/lumen-framework": "^8.0",
         "ext-json": "*",
-        "ext-redis": "*"
+        "ext-redis": "*",
+        "illuminate/database": "8.24.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
